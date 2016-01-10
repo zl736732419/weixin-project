@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -27,8 +29,14 @@ import org.dom4j.io.XMLWriter;
 
 import com.zheng.weixin.ctx.WeixinConstant;
 import com.zheng.weixin.ctx.WeixinContext;
+import com.zheng.weixin.dao.IWeixinMenuDao;
+import com.zheng.weixin.domain.User;
 import com.zheng.weixin.domain.WeixinMenu;
 import com.zheng.weixin.json.TemplateMsg;
+import com.zheng.weixin.json.WeixinUser;
+import com.zheng.weixin.listener.SpringManager;
+import com.zheng.weixin.service.IUserService;
+import com.zheng.weixin.service.IWeixinUserService;
 
 /**
  * 解析微信post过来的数据 响应的数据只能通过inputstream的方式来获取
@@ -37,7 +45,6 @@ import com.zheng.weixin.json.TemplateMsg;
  * @data 2016年1月2日 上午9:20:17
  */
 public class WeixinMessageKit {
-
 	/**
 	 * 文本消息列表
 	 */
@@ -88,6 +95,25 @@ public class WeixinMessageKit {
 	}
 	
 	/**
+	 * 发送微信url授权认证请求
+	 *
+	 * @author zhenglian
+	 * @data 2016年1月10日 下午6:05:34
+	 * @param url
+	 * @param resp
+	 * @throws IOException 
+	 * 
+	 */
+	public static void sendWeixinAuth(String url, HttpServletResponse resp) throws IOException {
+		String weixinUrl = WeixinConstant.AUTH_QUERY_CODE
+				.replaceAll("APPID", WeixinContext.getInstance().getAppId())
+				.replaceAll("REDIRECT_URI", URLEncoder.encode(url, "UTF-8"))
+				.replaceAll("SCOPE", "snsapi_base")
+				.replaceAll("state", "1");
+		resp.sendRedirect(weixinUrl); // 请求微信端进行授权
+	}
+	
+	/**
 	 * 处理点击事件
 	 *
 	 * @author zhenglian
@@ -96,8 +122,11 @@ public class WeixinMessageKit {
 	 * @param msgMap
 	 * @return
 	 */
-	public static String handleClickEvent(WeixinMenu menu,
-			Map<String, Object> msgMap) {
+	public static String handleClickEvent(Map<String, Object> msgMap) {
+		String eventKey = (String)msgMap.get("EventKey");
+		IWeixinMenuDao menuDao = (IWeixinMenuDao) SpringManager.getBean("weixinMenuDaoImpl", IWeixinMenuDao.class);
+		//根据eventKey到数据库查询该菜单responseType
+		WeixinMenu menu = menuDao.findByKey(eventKey);
 		Integer responseType = menu.getResponseType();
 		Map<String, Object> respMap = null;
 		if(1 == responseType) { //返回content中的内容(构造一个文本消息返回)
@@ -120,11 +149,16 @@ public class WeixinMessageKit {
 		Document document = DocumentHelper.createDocument();
 		Element root = document.addElement("xml");
 		Set<String> keys = respMsg.keySet();
-		Object value = null;
+		Object obj = null;
 		for (String key : keys) {
-			value = respMsg.get(key);
-			if(value instanceof String) {
-				root.addElement(key).addText((String) value);
+			obj = respMsg.get(key);
+			if(obj instanceof String) {
+				String value = (String) obj;
+				if(value.indexOf("<a") != -1) {
+					root.addElement(key).addCDATA(value);
+				}else {
+					root.addElement(key).addText(value);
+				}
 			}
 		}
 		StringWriter writer = new StringWriter();
@@ -198,6 +232,58 @@ public class WeixinMessageKit {
 	public static String replaceUrlAccessToken(String url) {
 		url = url.replaceAll("ACCESS_TOKEN", WeixinContext.getInstance().getAccessToken().getAccess_token());
 		return url;
+	}
+
+	/**
+	 * 处理用户关注事件
+	 * 根据openid关联本地用户
+	 *
+	 * @author zhenglian
+	 * @data 2016年1月10日 上午11:48:23
+	 * @param msgMap
+	 * @return
+	 */
+	public static String handleSubscribeEvent(Map<String, Object> msgMap) {
+		String openId = (String) msgMap.get("FromUserName");
+		IUserService userService = (IUserService) SpringManager.getBean("userServiceImpl", IUserService.class);
+		IWeixinUserService weixinUserService = (IWeixinUserService) SpringManager.getBean("weixinUserServiceImpl", IWeixinUserService.class);
+		User dbUser = userService.loadByOpenId(openId);
+		if(dbUser == null) { //当前关注的用户不存在
+			//获取微信端当前openid对应的用户信息
+			WeixinUser wUser = weixinUserService.loadWeixinUserByOpenId(openId);
+			dbUser = wUser.getUser();
+			userService.save(dbUser);
+		}else {
+			dbUser.setStatus(1); //修改为已关注状态
+			userService.update(dbUser);
+		}
+		String msg = null;
+		//判断用户是否已经绑定
+		if(dbUser.getBind() == 0) {
+			msg = "<a href=\"http://zl123.zicp.net/weixin-project/user/bindNewUser\">欢迎您关注我们的微信公众帐号，点击链接绑定获得更佳体验!</a>";
+		}else {
+			msg = "<a href=\"http://www.baidu.com\">欢迎您关注我们的微信公众帐号，点击了解更多</a>";;
+		}
+		System.out.println("============用户：" + openId + "关注了微信公众号!");
+		return WeixinMessageKit.map2Xml(WeixinMessageCreateKit.createTextMsg(msgMap, msg));
+	}
+
+	/**
+	 * 处理用户取消关注
+	 *
+	 * @author zhenglian
+	 * @data 2016年1月10日 下午12:13:27
+	 * @param msgMap
+	 */
+	public static void handleUnSubscribeEvent(Map<String, Object> msgMap) {
+		String openId = (String) msgMap.get("FromUserName");
+		IUserService userService = (IUserService) SpringManager.getBean("userServiceImpl", IUserService.class);
+		User dbUser = userService.loadByOpenId(openId);
+		if(dbUser != null) {
+			dbUser.setStatus(0);
+			userService.update(dbUser);
+			System.out.println("================用户：" + openId + "取消了对微信公众号的关注!");
+		}
 	}
 
 }

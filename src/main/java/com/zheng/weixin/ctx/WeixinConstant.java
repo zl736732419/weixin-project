@@ -23,6 +23,21 @@ public class WeixinConstant {
 	public static String QUERY_MENU = "https://api.weixin.qq.com/cgi-bin/menu/get?access_token=ACCESS_TOKEN";
 	
 	/**
+	 * 查询用户信息
+	 */
+	public static String QUERY_USER = "https://api.weixin.qq.com/cgi-bin/user/info?access_token=ACCESS_TOKEN&openid=OPENID&lang=zh_CN";
+	
+	/**
+	 * 查询授权code
+	 */
+	public static String AUTH_QUERY_CODE = "https://open.weixin.qq.com/connect/oauth2/authorize?appid=APPID&redirect_uri=REDIRECT_URI&response_type=code&scope=SCOPE&state=STATE#wechat_redirect";
+	
+	/**
+	 * 根据授权code获取AccessToken
+	 */
+	public static String AUTH_QUERY_ACCESS_TOKEN_BY_CODE = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=APPID&secret=SECRET&code=CODE&grant_type=authorization_code";
+	
+	/**
 	 * 上传临时素材
 	 */
 	public static String UPLOAD_MEDIA = "https://api.weixin.qq.com/cgi-bin/media/upload?access_token=ACCESS_TOKEN&type=TYPE";

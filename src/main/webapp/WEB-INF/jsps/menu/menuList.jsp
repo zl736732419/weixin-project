@@ -31,8 +31,8 @@
 			<div class="col-md-12">
 				<table class="table table-hover table-condensed table-bordered">
 					<thead>
-						<a href="menu/add">添加</a>&nbsp;
-						<a href="menu/publish">发布</a>
+						<a href="menu/add" class="btn btn-default">添加</a>&nbsp;
+						<a href="menu/publish" class="btn btn-primary">发布</a>
 					</thead>
 					<tr class="active">
 						<th></th>

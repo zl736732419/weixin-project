@@ -88,6 +88,8 @@
 			<tx:method name="save*" propagation="REQUIRED"/>
 			<tx:method name="clear*" propagation="REQUIRED"/>
 			<tx:method name="empty*" propagation="REQUIRED"/>
+			<tx:method name="handleMsg" propagation="REQUIRED"/>
+			<tx:method name="bind*" propagation="REQUIRED"/>
 			<tx:method name="init*" propagation="REQUIRED"/>
 		</tx:attributes>
 	</tx:advice>

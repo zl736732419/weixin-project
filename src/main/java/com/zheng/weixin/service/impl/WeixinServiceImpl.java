@@ -50,17 +50,13 @@ public class WeixinServiceImpl implements IWeixinService {
 		}
 		System.out.println("==============收到微信发送的消息: " + msgMap);
 		String event = ((String) msgMap.get("Event")).trim();
-		Object eventKeyObj = msgMap.get("EventKey");
-		if(eventKeyObj == null) { //地理位置消息就没有eventKey
-			return null;
-		}
-		String eventKey = (String) eventKeyObj;
-		//根据eventKey到数据库查询该菜单responseType
-		WeixinMenu menu = menuDao.findByKey(eventKey);
 		String respMsg = null;
-		if("CLICK".equals(event)) {
-			
-			respMsg = WeixinMessageKit.handleClickEvent(menu, msgMap);
+		if("CLICK".equals(event)) { //点击事件
+			respMsg = WeixinMessageKit.handleClickEvent(msgMap);
+		}else if("subscribe".equals(event)) { //用户关注
+			respMsg = WeixinMessageKit.handleSubscribeEvent(msgMap);
+		}else if("unsubscribe".equals(event)) { //用户取消关注
+			WeixinMessageKit.handleUnSubscribeEvent(msgMap);
 		}
 		
 		//在获取到响应消息之后加入到消息队列对应的消息中

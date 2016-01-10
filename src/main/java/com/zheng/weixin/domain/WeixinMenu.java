@@ -31,7 +31,7 @@ public class WeixinMenu {
 	/**
 	 * 响应的类型 1 ：取content响应
 	 */
-	private Integer responseType;
+	private int responseType;
 	private Integer orderNum;
 
 	private Integer parentId;
@@ -40,72 +40,72 @@ public class WeixinMenu {
 		return id;
 	}
 
-	public String getContent() {
-		return content;
-	}
-
-	public String getMenuKey() {
-		return menuKey;
+	public void setId(Integer id) {
+		this.id = id;
 	}
 
 	public String getName() {
 		return name;
 	}
 
-	public Integer getOrderNum() {
-		return orderNum;
-	}
-
-	public Integer getParentId() {
-		return parentId;
-	}
-
-	public Integer getResponseType() {
-		return responseType;
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	public String getType() {
 		return type;
 	}
 
-	public String getUrl() {
-		return url;
+	public void setType(String type) {
+		this.type = type;
 	}
 
-	public void setContent(String content) {
-		this.content = content;
-	}
-
-	public void setId(Integer id) {
-		this.id = id;
+	public String getMenuKey() {
+		return menuKey;
 	}
 
 	public void setMenuKey(String menuKey) {
 		this.menuKey = menuKey;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public String getUrl() {
+		return url;
+	}
+
+	public void setUrl(String url) {
+		this.url = url;
+	}
+
+	public String getContent() {
+		return content;
+	}
+
+	public void setContent(String content) {
+		this.content = content;
+	}
+
+	public int getResponseType() {
+		return responseType;
+	}
+
+	public void setResponseType(int responseType) {
+		this.responseType = responseType;
+	}
+
+	public Integer getOrderNum() {
+		return orderNum;
 	}
 
 	public void setOrderNum(Integer orderNum) {
 		this.orderNum = orderNum;
 	}
 
+	public Integer getParentId() {
+		return parentId;
+	}
+
 	public void setParentId(Integer parentId) {
 		this.parentId = parentId;
-	}
-
-	public void setResponseType(Integer responseType) {
-		this.responseType = responseType;
-	}
-
-	public void setType(String type) {
-		this.type = type;
-	}
-
-	public void setUrl(String url) {
-		this.url = url;
 	}
 
 }

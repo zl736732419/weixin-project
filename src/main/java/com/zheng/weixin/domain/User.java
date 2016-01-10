@@ -20,8 +20,11 @@ public class User {
 	private String username;
 	private String nickname;
 	private String password;
-	private String openid;
-	private Integer status;
+	private String openId;
+	private int status; // 用户状态表示当前用户是否已经关注微信 1:关注, 0:未关注
+	private String sex;
+	private int bind;
+	private String headImgUrl;
 
 	public Integer getId() {
 		return id;
@@ -55,20 +58,44 @@ public class User {
 		this.password = password;
 	}
 
-	public String getOpenid() {
-		return openid;
+	public String getOpenId() {
+		return openId;
 	}
 
-	public void setOpenid(String openid) {
-		this.openid = openid;
+	public void setOpenId(String openId) {
+		this.openId = openId;
 	}
 
-	public Integer getStatus() {
+	public int getStatus() {
 		return status;
 	}
 
-	public void setStatus(Integer status) {
+	public void setStatus(int status) {
 		this.status = status;
+	}
+
+	public String getSex() {
+		return sex;
+	}
+
+	public void setSex(String sex) {
+		this.sex = sex;
+	}
+
+	public int getBind() {
+		return bind;
+	}
+
+	public void setBind(int bind) {
+		this.bind = bind;
+	}
+
+	public String getHeadImgUrl() {
+		return headImgUrl;
+	}
+
+	public void setHeadImgUrl(String headImgUrl) {
+		this.headImgUrl = headImgUrl;
 	}
 
 }
