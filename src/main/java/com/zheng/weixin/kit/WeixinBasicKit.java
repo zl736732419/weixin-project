@@ -83,36 +83,4 @@ public class WeixinBasicKit {
 				.getAccessToken().getAccess_token());
 		return url;
 	}
-	
-	/**
-	 * 判断请求是否成功，返回的数据是否正常
-	 * 正常情况分为两种
-	 * 1.转化为指定的类型对象出错，但是转化为ErrorResp成功且errorcode=0
-	 * 2.转化为指定类型的对象成功
-	 *
-	 * @author zhenglian
-	 * @data 2016年1月7日 下午10:57:09
-	 * @param content
-	 * @return
-	 */
-	public static boolean isReqSuc(String content) {
-		try {
-			if(!content.contains("errcode")) {
-				return true;
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		try {
-			ErrorMsg msg = JsonKit.json2Obj(content, ErrorMsg.class); //错误码为0
-			if(Integer.parseInt(msg.getErrcode()) == 0) {
-				return true;
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		return false;
-	}
 }

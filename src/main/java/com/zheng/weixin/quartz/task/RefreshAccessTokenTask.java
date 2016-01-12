@@ -23,7 +23,7 @@ public class RefreshAccessTokenTask {
 				.replaceAll("APPSECRET", WeixinContext.getInstance().getAppSecret());
 		String content = WeixinReqKit.reqGet(url);
 		if(content != null) {
-			if(WeixinBasicKit.isReqSuc(content)) {
+			if(WeixinReqKit.isReqSuc(content)) {
 				AccessToken accessToken = JsonKit.json2Obj(content, AccessToken.class);
 				WeixinContext.getInstance().setAccessToken(accessToken);
 			}else {

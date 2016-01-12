@@ -2,6 +2,7 @@ package com.zheng.weixin.web;
 
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -153,4 +154,30 @@ public class UserController extends BaseController {
 		return "redirect:/user/list";
 	}
 
+	@RequestMapping(value="/resetPwd", method=RequestMethod.GET)
+	public String resetPwdPage() {
+		return "user/resetPwd";
+	}
+	
+	@RequestMapping(value="/resetPwd", method=RequestMethod.POST)
+	public String resetPwd(String password, String confirmPwd) {
+		if(StringUtils.isBlank(password)
+				|| StringUtils.isBlank(confirmPwd)) {
+			putRequestContext("error", "重置密码时密码、确认密码不能为空!");
+			return "user/resetPwd";
+		}
+		
+		if(!password.equals(confirmPwd)) { //这里的判断应该是在用户完成编辑时就触发检测两次密码是否一致，这里为了简单测试
+			putRequestContext("error", "两次输入的密码不匹配!");
+			return "user/resetPwd";
+		}
+		
+		User user = (User) getSessionInfo(LOGIN_USER);
+		User dbUser = userService.findById(user.getId());
+		dbUser.setPassword(password);
+		userService.update(dbUser);
+		
+		return "redirect:/user/login";
+	}
+	
 }

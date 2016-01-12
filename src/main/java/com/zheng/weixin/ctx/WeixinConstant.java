@@ -28,6 +28,16 @@ public class WeixinConstant {
 	public static String QUERY_USER = "https://api.weixin.qq.com/cgi-bin/user/info?access_token=ACCESS_TOKEN&openid=OPENID&lang=zh_CN";
 	
 	/**
+	 * 获取微信二维码凭据
+	 */
+	public static String QUERY_QR_TICKET = "https://api.weixin.qq.com/cgi-bin/qrcode/create?access_token=ACCESS_TOKEN";
+	
+	/**
+	 * 获取微信二维码
+	 */
+	public static String QUERY_QR = "https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=TICKET";
+	
+	/**
 	 * 查询授权code
 	 */
 	public static String AUTH_QUERY_CODE = "https://open.weixin.qq.com/connect/oauth2/authorize?appid=APPID&redirect_uri=REDIRECT_URI&response_type=code&scope=SCOPE&state=STATE#wechat_redirect";

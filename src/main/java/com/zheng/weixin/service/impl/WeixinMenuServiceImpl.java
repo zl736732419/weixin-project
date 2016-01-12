@@ -17,6 +17,7 @@ import com.zheng.weixin.domain.WeixinMenu;
 import com.zheng.weixin.dto.WeixinMenuDto;
 import com.zheng.weixin.kit.JsonKit;
 import com.zheng.weixin.kit.WeixinBasicKit;
+import com.zheng.weixin.kit.WeixinMessageKit;
 import com.zheng.weixin.kit.WeixinReqKit;
 import com.zheng.weixin.service.IWeixinMenuService;
 
@@ -199,12 +200,12 @@ public class WeixinMenuServiceImpl extends BaseServiceImpl<WeixinMenu>
 		String url = WeixinBasicKit
 				.replaceAccessToken(WeixinConstant.CREATE_MENU);
 		String content = WeixinReqKit.reqPostJson(url, json);
-		if (WeixinBasicKit.isReqSuc(content)) {
+		if (WeixinReqKit.isReqSuc(content)) {
 			// 从微信服务器上再提取刚创建的自定义菜单
 			url = WeixinBasicKit.replaceAccessToken(WeixinConstant.QUERY_MENU);
 			content = WeixinReqKit.reqGet(url);
 			System.out.println(content);
-			if (WeixinBasicKit.isReqSuc(content)) {
+			if (WeixinReqKit.isReqSuc(content)) {
 				return content;
 			} else {
 				System.out.println(content);
