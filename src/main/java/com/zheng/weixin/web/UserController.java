@@ -2,6 +2,7 @@ package com.zheng.weixin.web;
 
 import java.util.List;
 
+import org.apache.commons.lang.math.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -10,7 +11,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import com.zheng.weixin.domain.User;
+import com.zheng.weixin.domain.WeixinQr;
 import com.zheng.weixin.service.IUserService;
+import com.zheng.weixin.service.IWeixinQrService;
 
 @Controller
 @RequestMapping("/user")
@@ -18,6 +21,8 @@ public class UserController extends BaseController {
 	
 	@Autowired
 	private IUserService userService;
+	@Autowired
+	private IWeixinQrService qrService;
 
 	@RequestMapping(value = "/list", method = RequestMethod.GET)
 	public String listPage() {
@@ -63,6 +68,34 @@ public class UserController extends BaseController {
 	public String loginPage() {
 		return "user/login";
 	}
+	
+	@RequestMapping(value="/qrlogin", method=RequestMethod.GET)
+	public String qrLoginPage() {
+		WeixinQr qr = new WeixinQr();
+		qr.setName("扫码登录");
+		qr.setMsg("扫码登录");
+		qr.setSnum(RandomUtils.nextInt() + WeixinQr.MAX_FOREVER_SNUM + 1);
+		qr.setStatus(0);
+		qr.setType(WeixinQr.TYPE_USER_LOGIN);
+		
+		qrService.save(qr);
+		putRequestContext("qr", qr);
+		return "user/qrlogin";
+	}
+	
+	@RequestMapping(value="qrlogin/{snum}", method=RequestMethod.POST)
+	public void qrLogin(@PathVariable Integer snum) {
+		WeixinQr qr = qrService.loadBySnum(snum);
+		if(qr.getStatus() == 1 && !StringUtils.isBlank(qr.getQrData())) {
+			//将用户取出并存放到session中
+			User user = userService.loadByOpenId(qr.getQrData());
+			putSessionContext(LOGIN_USER, user);
+			writeText("1");
+		}else {
+			writeText("0");
+		}
+	}
+	
 	
 	@RequestMapping(value="/login", method=RequestMethod.POST)
 	public String login(User user) {

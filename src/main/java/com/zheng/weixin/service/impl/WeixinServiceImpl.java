@@ -10,10 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.zheng.weixin.dao.IWeixinMenuDao;
-import com.zheng.weixin.domain.WeixinMenu;
 import com.zheng.weixin.kit.DuplicateMessageKit;
 import com.zheng.weixin.kit.WeixinBasicKit;
-import com.zheng.weixin.kit.WeixinMessageCreateKit;
 import com.zheng.weixin.kit.WeixinMessageKit;
 import com.zheng.weixin.service.IWeixinService;
 
@@ -57,6 +55,8 @@ public class WeixinServiceImpl implements IWeixinService {
 			respMsg = WeixinMessageKit.handleSubscribeEvent(msgMap);
 		}else if("unsubscribe".equals(event)) { //用户取消关注
 			WeixinMessageKit.handleUnSubscribeEvent(msgMap);
+		}else if("SCAN".equals(event)) { //用户已关注后进行的二维码扫描事件
+			respMsg = WeixinMessageKit.handleScanEvent(msgMap);
 		}
 		
 		//在获取到响应消息之后加入到消息队列对应的消息中

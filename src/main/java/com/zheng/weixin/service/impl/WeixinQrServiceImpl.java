@@ -84,7 +84,7 @@ public class WeixinQrServiceImpl extends BaseServiceImpl<WeixinQr> implements
 				dbQr.setSnum(qr.getSnum());
 				dbQr.setStatus(qr.getStatus());
 				dbQr.setType(qr.getType());
-				String ticket = WeixinQrKit.getForeverQrTicket(dbQr);
+				String ticket = WeixinQrKit.getTempQrTicket(dbQr);
 				if(StringUtils.isBlank(ticket)) {
 					throw new RuntimeException("获取临时二维码ticket为空!");
 				}
@@ -97,7 +97,7 @@ public class WeixinQrServiceImpl extends BaseServiceImpl<WeixinQr> implements
 			}
 		} else {
 			qr.setCreateTime(new Date());
-			String ticket = WeixinQrKit.getForeverQrTicket(qr);
+			String ticket = WeixinQrKit.getTempQrTicket(qr);
 			if(StringUtils.isBlank(ticket)) {
 				throw new RuntimeException("获取临时二维码ticket为空!");
 			}

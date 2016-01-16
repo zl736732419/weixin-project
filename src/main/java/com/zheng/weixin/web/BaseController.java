@@ -1,5 +1,7 @@
 package com.zheng.weixin.web;
 
+import java.io.IOException;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -16,6 +18,16 @@ public class BaseController {
 		this.response = response;
 	}
 
+	protected void writeText(String text) {
+		response.setHeader("Content-Type", "text/html;charset=utf-8");
+		response.setCharacterEncoding("UTF-8");
+		try {
+			response.getWriter().println(text);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	@ModelAttribute
 	public void setRequest(HttpServletRequest request) {
 		this.request = request;

@@ -22,7 +22,7 @@ public class AccessFilter implements Filter {
 		HttpServletRequest req = (HttpServletRequest) request;
 		HttpServletResponse resp = (HttpServletResponse) response;
 		String uri = req.getRequestURI();
-		if(uri.indexOf("/user/login") != -1 
+		if(uri.indexOf("login") != -1 
 				|| uri.indexOf("/wget") != -1) {
 			chain.doFilter(request, response);
 			return;

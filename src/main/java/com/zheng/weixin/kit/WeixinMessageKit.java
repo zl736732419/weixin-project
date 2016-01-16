@@ -15,6 +15,7 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
@@ -31,11 +32,15 @@ import com.zheng.weixin.ctx.WeixinConstant;
 import com.zheng.weixin.ctx.WeixinContext;
 import com.zheng.weixin.dao.IWeixinMenuDao;
 import com.zheng.weixin.domain.User;
+import com.zheng.weixin.domain.WeixinGroup;
 import com.zheng.weixin.domain.WeixinMenu;
+import com.zheng.weixin.domain.WeixinQr;
 import com.zheng.weixin.json.TemplateMsg;
 import com.zheng.weixin.json.WeixinUser;
 import com.zheng.weixin.listener.SpringManager;
 import com.zheng.weixin.service.IUserService;
+import com.zheng.weixin.service.IWeixinGroupService;
+import com.zheng.weixin.service.IWeixinQrService;
 import com.zheng.weixin.service.IWeixinUserService;
 
 /**
@@ -245,6 +250,104 @@ public class WeixinMessageKit {
 	 */
 	public static String handleSubscribeEvent(Map<String, Object> msgMap) {
 		String openId = (String) msgMap.get("FromUserName");
+		User dbUser = loadUserFromMap(openId);
+		String msg = null;
+		//用户没有关注时扫描二维码事件
+		String snum = getSnumFromMap(msgMap, true);
+		
+		if(!StringUtils.isBlank(snum)) {
+			//处理二维码消息  用户没有关注时进行扫描只能做修改分组操作,其余操作暂时不允许
+			handleQrEvent(openId, snum);
+		}
+		
+		//判断用户是否已经绑定
+		if(dbUser.getBind() == 0) {
+			msg = "<a href=\"http://zl123.zicp.net/weixin-project/user/bindNewUser\">欢迎您关注我们的微信公众帐号，点击链接绑定获得更佳体验!</a>";
+		}else {
+			msg = "<a href=\"http://www.baidu.com\">欢迎您关注我们的微信公众帐号，点击了解更多</a>";;
+		}
+		System.out.println("============用户：" + openId + "关注了微信公众号!");
+		return WeixinMessageKit.map2Xml(WeixinMessageCreateKit.createTextMsg(msgMap, msg));
+	}
+
+	/**
+	 * 处理二维码事件
+	 *
+	 * @author zhenglian
+	 * @data 2016年1月14日 下午10:54:02
+	 * @param openId
+	 * @param snum
+	 */
+	private static String handleQrEvent(String openId, String snum) {
+		IWeixinQrService qrService = (IWeixinQrService) SpringManager.getBean("weixinQrServiceImpl", IWeixinQrService.class);
+		WeixinQr qr = qrService.loadBySnum(Integer.valueOf(snum));
+		if(WeixinQr.TYPE_CHANGE_USER_GROUP == qr.getType()) {
+			return moveUserGroup(openId, snum);
+		}else if(WeixinQr.TYPE_USER_LOGIN == qr.getType()) {
+			return handleQrLogin(openId, qr);
+		}
+		
+		return null;
+	}
+
+	/**
+	 * 处理微信扫码登录
+	 *
+	 * @author zhenglian
+	 * @data 2016年1月14日 下午10:56:59
+	 * @param openId
+	 * @param qr
+	 * @return
+	 */
+	private static String handleQrLogin(String openId, WeixinQr qr) {
+		IWeixinQrService qrService = (IWeixinQrService) SpringManager.getBean("weixinQrServiceImpl", IWeixinQrService.class);
+		qr.setQrData(openId);
+		qrService.save(qr);
+		return null;
+	}
+
+	private static String moveUserGroup(String openId, String snum) {
+		IWeixinQrService qrService = (IWeixinQrService) SpringManager.getBean("weixinQrServiceImpl", IWeixinQrService.class);
+		IWeixinGroupService groupService = (IWeixinGroupService) SpringManager.getBean("weixinGroupServiceImpl", IWeixinGroupService.class);
+		WeixinQr qr = qrService.loadBySnum(Integer.parseInt(snum));
+		if(qr.getType() == WeixinQr.TYPE_CHANGE_USER_GROUP) { //修改用户分组
+			groupService.moveUserToWGroup(openId, Integer.parseInt(qr.getQrData()));
+		}
+		WeixinGroup group = groupService.findUserWGroup(openId);
+		String content = "您已经成功将用户移动到分组" + group.getName();
+		return content;
+	}
+
+	/**
+	 * 根据用户消息获取二维码场景值,未关注时场景值需要split分割获取
+	 *
+	 * @author zhenglian
+	 * @data 2016年1月14日 下午9:06:03
+	 * @param msgMap
+	 */
+	private static String getSnumFromMap(Map<String, Object> msgMap, boolean isSplit) {
+		String eventKey = (String) msgMap.get("EventKey");
+		if(StringUtils.isBlank(eventKey)) {//不是二维码扫描事件
+			return null;
+		}
+		String snum = null;
+		if(isSplit) {
+			snum = eventKey.split("_")[1];
+		}else {
+			snum = eventKey;
+		}
+		return snum;
+	}
+	
+	/**
+	 * 根据微信发送过来的消息获取用户
+	 *
+	 * @author zhenglian
+	 * @data 2016年1月14日 下午9:01:26
+	 * @param msgMap
+	 * @return
+	 */
+	private static User loadUserFromMap(String openId) {
 		IUserService userService = (IUserService) SpringManager.getBean("userServiceImpl", IUserService.class);
 		IWeixinUserService weixinUserService = (IWeixinUserService) SpringManager.getBean("weixinUserServiceImpl", IWeixinUserService.class);
 		User dbUser = userService.loadByOpenId(openId);
@@ -257,17 +360,9 @@ public class WeixinMessageKit {
 			dbUser.setStatus(1); //修改为已关注状态
 			userService.update(dbUser);
 		}
-		String msg = null;
-		//判断用户是否已经绑定
-		if(dbUser.getBind() == 0) {
-			msg = "<a href=\"http://zl123.zicp.net/weixin-project/user/bindNewUser\">欢迎您关注我们的微信公众帐号，点击链接绑定获得更佳体验!</a>";
-		}else {
-			msg = "<a href=\"http://www.baidu.com\">欢迎您关注我们的微信公众帐号，点击了解更多</a>";;
-		}
-		System.out.println("============用户：" + openId + "关注了微信公众号!");
-		return WeixinMessageKit.map2Xml(WeixinMessageCreateKit.createTextMsg(msgMap, msg));
+		return dbUser;
 	}
-
+	
 	/**
 	 * 处理用户取消关注
 	 *
@@ -284,6 +379,46 @@ public class WeixinMessageKit {
 			userService.update(dbUser);
 			System.out.println("================用户：" + openId + "取消了对微信公众号的关注!");
 		}
+	}
+
+	/**
+	 * 处理已关注用户的二维码扫描事件
+	 * 可能会存在数据库对应用户为空的情况
+	 *
+	 * @author zhenglian
+	 * @data 2016年1月14日 下午9:22:29
+	 * @param msgMap
+	 */
+	public static String handleScanEvent(Map<String, Object> msgMap) {
+		String openId = (String) msgMap.get("FromUserName");
+		String snum = getSnumFromMap(msgMap, false);
+		User dbUser = loadUserFromMap(openId);
+		IWeixinQrService qrService = (IWeixinQrService) SpringManager.getBean("weixinQrServiceImpl", IWeixinQrService.class);
+		WeixinQr qr = qrService.loadBySnum(Integer.parseInt(snum));
+		Integer type = qr.getType();
+		String content = null;
+		if(type == WeixinQr.TYPE_BIND_USER) {//绑定用户
+			if(dbUser.getBind() == 1) { //用户已经绑定过就不做处理
+				content = "<a href=\"http://zl123.zicp.net/weixin-project/user/bindNewUser\">欢迎您关注我们的微信公众帐号，点击链接绑定获得更佳体验!</a>";
+			}else {
+				content = "您已经绑定过用户，无需进行再次绑定操作!";
+			}
+			return WeixinMessageKit.map2Xml(WeixinMessageCreateKit.createTextMsg(msgMap, content));
+		}else if(type == WeixinQr.TYPE_CHANGE_USER_GROUP) { //修改用户分组
+			content = moveUserGroup(openId, snum);
+			return WeixinMessageKit.map2Xml(WeixinMessageCreateKit.createTextMsg(msgMap, content));
+		}else if(type == WeixinQr.TYPE_RESET_PASSWORD) {//重置密码
+			if(dbUser.getBind() == 0) {
+				content = "您还没有绑定用户，无法进行该操作!";
+			}else {
+				content = "<a href=\""+qr.getQrData()+"\">"+qr.getMsg()+"</a>";
+			}
+			return WeixinMessageKit.map2Xml(WeixinMessageCreateKit.createTextMsg(msgMap, content));
+		}else if(type == WeixinQr.TYPE_USER_LOGIN) { //用户登录
+			return handleQrLogin(openId, qr);
+		}
+		
+		return null;
 	}
 
 }

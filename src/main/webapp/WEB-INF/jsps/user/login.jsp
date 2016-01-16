@@ -42,6 +42,7 @@
 						</tr>
 					</table>
 					<input type="submit" value="确定">
+					<a href="user/qrlogin">扫码登录</a>
 				</form>
 			</div>
 		</div>
